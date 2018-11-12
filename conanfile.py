@@ -15,11 +15,22 @@ class GstreamerConan(ConanFile):
     generators = "cmake"
     requires = "libffi/3.3-rc0@conanos/dev","glib/2.58.0@conanos/dev","gobject-introspection/1.58.0@conanos/dev" #gtk-doc-lite
     source_subfolder = "source_subfolder"
+    remotes = {'origin': 'https://github.com/GStreamer/gstreamer.git'}
 
     def source(self):
-        tools.get("{0}/archive/{1}.tar.gz".format(self.homepage, self.version))
-        extracted_dir = self.name.split('-')[0] + "-" + self.version
-        os.rename(extracted_dir, self.source_subfolder)
+        #tools.get("{0}/archive/{1}.tar.gz".format(self.homepage, self.version))
+        #extracted_dir = self.name.split('-')[0] + "-" + self.version
+        #os.rename(extracted_dir, self.source_subfolder)
+        
+        tools.mkdir(self.source_subfolder)
+        with tools.chdir(self.source_subfolder):
+            self.run('git init')
+            for key, val in self.remotes.items():
+                self.run("git remote add %s %s"%(key, val))
+            self.run('git fetch --all')
+            self.run('git reset --hard %s'%(self.version))
+            self.run('git submodule update --init --recursive')
+
 
     def build(self):
         with tools.environment_append({"LD_LIBRARY_PATH":'%s/lib'%(self.deps_cpp_info["libffi"].rootpath),
